@@ -6,7 +6,18 @@ import math
 pygame.init()
 
 class Ball:
+    """ Define object Ball.
+    """    
     def __init__(self, pos, radius, init_vel, color, mass = None):
+        """ Constructor of the class.
+
+        Args:
+            pos (list): initial position of the ball.
+            radius (double): radius of the ball.
+            init_vel (double): initial velocity.
+            color (tuple): color of the ball.
+            mass (double, optional): mass of the ball. Defaults to None.
+        """        
         self.x = pos[0]
         self.y = pos[1]
 
@@ -21,9 +32,19 @@ class Ball:
         self.color = color
 
     def kinetic_energy(self):
+        """ Compute kinetic energy.
+
+        Returns:
+            double: kinetic energy.
+        """        
         return 0.5*self.mass*np.linalg.norm(self.v)**2
     
     def pos(self, pos):
+        """ Modify ball's position.
+
+        Args:
+            pos (list): new position of the ball.
+        """        
         self.x = pos[0]
         self.y = pos[1]
 
@@ -34,6 +55,15 @@ class Ball:
         return (3/4 * self.mass / np.pi)**(1/3)
 
 def coll(ball_1, ball_2):
+    """ Manage collision between 2 balls.
+
+    Args:
+        ball_1 (Ball): ball1.
+        ball_2 (Ball): ball2.
+
+    Returns:
+        Ball, Ball: ball1, ball2
+    """    
     m1, m2 = ball_1.mass, ball_2.mass
     v1, v2 = np.array(ball_1.v), np.array(ball_2.v)
     v_rel = np.linalg.norm(v1 - v2)
