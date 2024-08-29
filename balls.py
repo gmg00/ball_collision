@@ -1,109 +1,10 @@
 import pygame
 import numpy as np
 import itertools
-import math
+from functions import coll
+from Ball import Ball
 
-pygame.init()
-
-class Ball:
-    """ Define object Ball.
-    """    
-    def __init__(self, pos, radius, init_vel, color, mass = None):
-        """ Constructor of the class.
-
-        Args:
-            pos (list): initial position of the ball.
-            radius (double): radius of the ball.
-            init_vel (double): initial velocity.
-            color (tuple): color of the ball.
-            mass (double, optional): mass of the ball. Defaults to None.
-        """        
-        self.x = pos[0]
-        self.y = pos[1]
-
-        self.radius = radius
-        self.v = init_vel
-
-        if mass == None:
-            self.mass = self.m_from_r()
-        else:
-            self.mass = mass
-
-        self.color = color
-
-    def kinetic_energy(self):
-        """ Compute kinetic energy.
-
-        Returns:
-            double: kinetic energy.
-        """        
-        return 0.5*self.mass*np.linalg.norm(self.v)**2
-    
-    def pos(self, pos):
-        """ Modify ball's position.
-
-        Args:
-            pos (list): new position of the ball.
-        """        
-        self.x = pos[0]
-        self.y = pos[1]
-
-    def m_from_r(self):
-        return 4/3 * np.pi * self.radius**3
-    
-    def r_from_m(self):
-        return (3/4 * self.mass / np.pi)**(1/3)
-
-def coll(ball_1, ball_2):
-    """ Manage collision between 2 balls.
-
-    Args:
-        ball_1 (Ball): ball1.
-        ball_2 (Ball): ball2.
-
-    Returns:
-        Ball, Ball: ball1, ball2
-    """    
-    m1, m2 = ball_1.mass, ball_2.mass
-    v1, v2 = np.array(ball_1.v), np.array(ball_2.v)
-    v_rel = np.linalg.norm(v1 - v2)
-
-    overlap = ball_1.radius + ball_2.radius - np.linalg.norm(np.array([ball_1.x, ball_1.y]) - np.array([ball_2.x, ball_2.y]))
-    t_overlap = overlap / v_rel
-    # print(f't_overlap = {t_overlap}')
-
-    pos1 = np.array([ball_1.x, ball_1.y]) - v1 * t_overlap 
-    pos2 = np.array([ball_2.x, ball_2.y]) - v2 * t_overlap 
-
-    # print(f'radius1 + radius2 = {ball_1.radius + ball_2.radius}')
-    # print(f'pos1 - pos2 = {np.linalg.norm(pos1-pos2)}')
-
-    n = (pos1 - pos2) / np.linalg.norm(pos1 - pos2)
-    t = np.array([-n[1], n[0]])
-
-    # Velocities along the normal direction
-    v1_n = np.dot(v1, n)
-    v2_n = np.dot(v2, n)
-
-    # Velocities along the tangential direction
-    v1_t = np.dot(v1, t)
-    v2_t = np.dot(v2, t)
-
-    # New normal velocities after collision
-    v1_n_new = (v1_n * (m1 - m2) + 2 * m2 * v2_n) / (m1 + m2)
-    v2_n_new = (v2_n * (m2 - m1) + 2 * m1 * v1_n) / (m1 + m2)
-
-    # Combine new velocities
-    v1_new = v1_n_new * n + v1_t * t
-    v2_new = v2_n_new * n + v2_t * t
-
-    ball_1.pos(pos1)
-    ball_2.pos(pos2)
-
-    ball_1.v = v1_new
-    ball_2.v = v2_new
-
-    return ball_1, ball_2
+pygame.display.init()
 
 screen_width = 500
 
@@ -112,29 +13,29 @@ win = pygame.display.set_mode((screen_width, screen_width)) #width, height
 pygame.display.set_caption("First Game")
 clock = pygame.time.Clock()
 
-run = True
-is_moving = False
-collision = True
+# Create a semi-transparent surface to fade the trail
+trail_surface = pygame.Surface((screen_width, screen_width))
+trail_surface.set_alpha(255)  # Set the transparency (0-255, where 255 is opaque)
 
-theta = np.random.uniform(0, 2*np.pi, 3)
+theta = np.random.uniform(0, 2*np.pi, 6)
 
 ball_1 = Ball([100,250], 20, [5*np.cos(theta[0]), 5*np.sin(theta[0])], (255, 0, 0), mass = 2)
 ball_2 = Ball([400,250], 30, [5*np.cos(theta[1]), 5*np.sin(theta[1])], (0, 0, 255), mass = 6)
 ball_3 = Ball([250,250], 40, [5*np.cos(theta[2]), 5*np.sin(theta[2])], (0, 255, 0), mass = 16)
-ball_4 = Ball([250,100], 30, [5*np.cos(theta[2]), 5*np.sin(theta[2])], (255, 255, 0), mass = 6)
-ball_5 = Ball([250,350], 30, [5*np.cos(theta[2]), 5*np.sin(theta[2])], (0, 255, 255), mass = 6)
-ball_6 = Ball([250,450], 30, [5*np.cos(theta[2]), 5*np.sin(theta[2])], (255, 0, 255), mass = 6)
+ball_4 = Ball([250,100], 30, [5*np.cos(theta[3]), 5*np.sin(theta[3])], (255, 255, 0), mass = 6)
+ball_5 = Ball([250,350], 30, [5*np.cos(theta[4]), 5*np.sin(theta[4])], (0, 255, 255), mass = 6)
+ball_6 = Ball([250,450], 30, [5*np.cos(theta[5]), 5*np.sin(theta[5])], (255, 0, 255), mass = 6)
 
 balls = [ball_1, ball_2, ball_3, ball_4, ball_5, ball_6]
-
-# Create a semi-transparent surface to fade the trail
-trail_surface = pygame.Surface((screen_width, screen_width))
-trail_surface.set_alpha(255)  # Set the transparency (0-255, where 255 is opaque)
 
 k_e = 0
 for ball in balls:
     k_e += ball.kinetic_energy()
 print(f'initial kinetic energy = {k_e}')
+
+run = True
+is_moving = False
+collision = True
 
 while run:
     clock.tick(60)
